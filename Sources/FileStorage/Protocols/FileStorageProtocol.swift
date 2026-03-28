@@ -13,8 +13,10 @@ import Foundation
 public protocol FileStorageProtocol: Sendable {
 
     /// Persists `data` to disk, caches it in memory, and returns a stable identifier.
+    ///
     /// - Parameter data: The binary data to store.
     /// - Returns: A unique identifier suitable for storage in SwiftData.
+    /// - Throws: `FileStorageError.storeFailure` if the file cannot be written to disk.
     @discardableResult
     nonisolated func store(_ data: Data) throws -> String
 

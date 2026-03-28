@@ -15,6 +15,7 @@ public enum FileStorageError: Error, Sendable {
 }
 
 extension FileStorageError: LocalizedError {
+    /// A human-readable description of the error.
     public var errorDescription: String? {
         switch self {
         case .fileNotFound(let id):

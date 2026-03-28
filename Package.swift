@@ -9,7 +9,7 @@ let package = Package(
         .iOS(.v15),
         .watchOS(.v8),
         .tvOS(.v15),
-        .visionOS(.v1)
+        .visionOS(.v1),
     ],
     products: [
         .library(
@@ -21,19 +21,19 @@ let package = Package(
         .target(
             name: "FileStorage",
             swiftSettings: [
-                .defaultIsolation(MainActor.self)
+                .defaultIsolation(MainActor.self),
             ]
         ),
         .testTarget(
             name: "FileStorageTests",
             dependencies: ["FileStorage"],
             swiftSettings: [
-                .defaultIsolation(MainActor.self)
+                .defaultIsolation(MainActor.self),
             ]
         ),
     ],
     swiftLanguageModes: [
         .v6,
-        .v5
+        .v5,
     ]
 )

@@ -12,7 +12,7 @@ import Foundation
 public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
 
     private let storageURL: URL
-    
+
     // FileManager is thread-safe but not Sendable; nonisolated(unsafe) opts the property out
     // of @MainActor isolation so nonisolated methods can access it directly.
     nonisolated(unsafe) private let fileManager: FileManager
@@ -24,7 +24,7 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     /// - Parameters:
     ///   - subdirectory: Folder name appended to the Documents directory. Defaults to `"FileStorage"`.
     ///   - fileManager: The `FileManager` used for all disk operations. Defaults to `.default`.
-    ///   - cache: The `NSCache` instance used for in-memory caching. Defaults to `.medium`.
+    ///   - fileCache: The `NSCache` instance used for in-memory caching. Defaults to `.medium`.
     public nonisolated init(
         subdirectory: String = "FileStorage",
         fileManager: FileManager = .default,
