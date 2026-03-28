@@ -11,10 +11,12 @@ import Foundation
 /// `NSCache` (cache reads/writes) and atomic file I/O (disk operations).
 public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
 
+    /// The directory on disk where files managed by this instance reside.
     private let storageURL: URL
 
-    // FileManager is thread-safe but not Sendable; nonisolated(unsafe) opts the property out
-    // of @MainActor isolation so nonisolated methods can access it directly.
+    // FileManager and NSCache are thread-safe but not Sendable; nonisolated(unsafe)
+    // opts their properties out of @MainActor isolation so nonisolated methods can
+    // access them directly.
     nonisolated(unsafe) private let fileManager: FileManager
     nonisolated(unsafe) private let fileCache: NSCache<NSString, NSData>
 
@@ -38,6 +40,12 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
 
     // MARK: - FileStorageProtocol
 
+    /// Generates a UUID, writes `data` atomically to disk, caches it, and returns the identifier.
+    ///
+    /// The storage subdirectory is created lazily on the first call.
+    /// - Parameter data: The binary data to store.
+    /// - Returns: A UUID string identifying the stored file, suitable for persistence in SwiftData.
+    /// - Throws: `FileStorageError.storeFailure` wrapping any underlying file-system error.
     @discardableResult
     public nonisolated func store(_ data: Data) throws -> String {
         do {
@@ -52,6 +60,14 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
         }
     }
 
+    /// Returns data for `identifier`, reading from the memory cache before hitting disk.
+    ///
+    /// On a cache hit the result is returned immediately. On a miss the file is located
+    /// via a directory scan, loaded, and inserted into the cache for subsequent calls.
+    /// - Parameter identifier: The identifier previously returned by `store`.
+    /// - Returns: The binary data associated with `identifier`.
+    /// - Throws: `FileStorageError.fileNotFound` if no file exists for `identifier`;
+    ///   `FileStorageError.fetchFailure` if the file cannot be read from disk.
     public nonisolated func fetch(identifier: String) throws -> Data {
         do {
             if let cached = fileCache.object(forKey: identifier as NSString) as? Data {
@@ -69,6 +85,11 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
         }
     }
 
+    /// Removes the file and its memory-cache entry for `identifier`.
+    ///
+    /// Silently succeeds if no file exists for `identifier`.
+    /// - Parameter identifier: The identifier previously returned by `store`.
+    /// - Throws: `FileStorageError.deleteFailure` if the file cannot be removed from disk.
     public nonisolated func delete(identifier: String) throws {
         do {
             fileCache.removeObject(forKey: identifier as NSString)
@@ -83,6 +104,10 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
         }
     }
 
+    /// Evicts all memory-cache entries and deletes every managed file on disk.
+    ///
+    /// Silently succeeds if the storage directory does not exist yet.
+    /// - Throws: `FileStorageError.cleanFailure` if the directory contents cannot be removed.
     public nonisolated func clean() throws {
         do {
             fileCache.removeAllObjects()
@@ -101,7 +126,12 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
 
     // MARK: - Private helpers
 
-    nonisolated func url(for identifier: String) throws -> URL {
+    /// Returns the on-disk URL for `identifier`, scanning the storage directory.
+    ///
+    /// - Parameter identifier: The identifier to look up.
+    /// - Returns: The URL of the matching file.
+    /// - Throws: `FileStorageError.fileNotFound` if no matching file exists.
+    private nonisolated func url(for identifier: String) throws -> URL {
         let matches = try files(for: identifier)
         guard let url = matches.first else {
             throw FileStorageError.fileNotFound(identifier)
@@ -109,7 +139,12 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
         return url
     }
 
-    nonisolated func files(for identifier: String) throws -> [URL] {
+    /// Returns all URLs in the storage directory whose name (without extension) matches `identifier`.
+    ///
+    /// Returns an empty array if the storage directory does not exist yet.
+    /// - Parameter identifier: The identifier to match against file names.
+    /// - Returns: Matching file URLs, or `[]` if the directory is absent.
+    private nonisolated func files(for identifier: String) throws -> [URL] {
         guard fileManager.fileExists(atPath: storageURL.path) else { return [] }
         let contents = try fileManager.contentsOfDirectory(
             at: storageURL,

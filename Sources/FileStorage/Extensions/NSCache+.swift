@@ -1,5 +1,8 @@
 import Foundation
 
+/// Preset `NSCache` configurations for use with `FileStorage`.
+///
+/// Each property returns a new, independently configured cache instance.
 extension NSCache where KeyType == NSString, ObjectType == NSData {
 
     /// Up to 50 files, max 25 MB in memory.

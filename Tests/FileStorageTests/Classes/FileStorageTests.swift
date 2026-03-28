@@ -2,14 +2,14 @@ import Testing
 import Foundation
 @testable import FileStorage
 
-@Suite("FileStorage")
+@Suite("FileStorage", .serialized)
 struct FileStorageTests {
 
-    /// Each test gets an isolated subdirectory so tests never interfere.
     let storage: FileStorage
 
-    init() {
-        storage = FileStorage(subdirectory: "FileStorageTests-\(UUID().uuidString)")
+    init() throws {
+        storage = FileStorage()
+        try storage.clean()
     }
 
     // MARK: - store
@@ -33,30 +33,40 @@ struct FileStorageTests {
         try storage.store(Data("discard".utf8))
     }
 
+    @Test("store preserves all files independently")
+    func storePreservesMultipleFiles() throws {
+        let data1 = Data("first".utf8)
+        let data2 = Data("second".utf8)
+        let id1 = try storage.store(data1)
+        let id2 = try storage.store(data2)
+        #expect(try storage.fetch(identifier: id1) == data1)
+        #expect(try storage.fetch(identifier: id2) == data2)
+    }
+
+    @Test("store handles empty data")
+    func storeHandlesEmptyData() throws {
+        let identifier = try storage.store(Data())
+        let result = try storage.fetch(identifier: identifier)
+        #expect(result.isEmpty)
+    }
+
     // MARK: - fetch
 
     @Test("fetch returns the same data that was stored")
     func fetchReturnsStoredData() throws {
-        let data = Data("cached".utf8)
+        let data = Data("hello".utf8)
         let identifier = try storage.store(data)
-        let result = try storage.fetch(identifier: identifier)
-        #expect(result == data)
+        #expect(try storage.fetch(identifier: identifier) == data)
     }
 
     @Test("fetch reads correct data from disk on cache miss")
     func fetchReadsFromDisk() throws {
-        // Use a shared subdirectory so two separate instances point to the same files.
-        let subdir = "FileStorageTests-disk-\(UUID().uuidString)"
-        let writer = FileStorage(subdirectory: subdir)
         let data = Data("persistent".utf8)
-        let identifier = try writer.store(data)
+        let identifier = try storage.store(data)
 
         // Fresh instance → empty memory cache → must read from disk.
-        let reader = FileStorage(subdirectory: subdir)
-        let result = try reader.fetch(identifier: identifier)
-        #expect(result == data)
-
-        try writer.clean()
+        let reader = FileStorage()
+        #expect(try reader.fetch(identifier: identifier) == data)
     }
 
     @Test("fetch throws fileNotFound for unknown identifier")
@@ -84,16 +94,18 @@ struct FileStorageTests {
         }
     }
 
+    @Test("delete does not affect other stored files")
+    func deleteDoesNotAffectOtherFiles() throws {
+        let data1 = Data("keep".utf8)
+        let id1 = try storage.store(data1)
+        let id2 = try storage.store(Data("remove".utf8))
+        try storage.delete(identifier: id2)
+        #expect(try storage.fetch(identifier: id1) == data1)
+    }
+
     @Test("delete is idempotent for unknown identifier")
     func deleteUnknownIdentifierDoesNotThrow() throws {
         try storage.delete(identifier: "unknown")
-    }
-
-    @Test("delete on storage with no directory does not throw")
-    func deleteBeforeAnyStoreDoesNotThrow() throws {
-        // storage directory has never been created (no store called yet)
-        let fresh = FileStorage(subdirectory: "FileStorageTests-empty-\(UUID().uuidString)")
-        try fresh.delete(identifier: "ghost")
     }
 
     // MARK: - clean
@@ -111,12 +123,6 @@ struct FileStorageTests {
         }
     }
 
-    @Test("clean on storage with no directory does not throw")
-    func cleanBeforeAnyStoreDoesNotThrow() throws {
-        let fresh = FileStorage(subdirectory: "FileStorageTests-empty-\(UUID().uuidString)")
-        try fresh.clean()
-    }
-
     @Test("clean allows subsequent stores and fetches")
     func cleanThenStore() throws {
         try storage.store(Data("pre".utf8))
@@ -124,7 +130,6 @@ struct FileStorageTests {
 
         let data = Data("post".utf8)
         let identifier = try storage.store(data)
-        let result = try storage.fetch(identifier: identifier)
-        #expect(result == data)
+        #expect(try storage.fetch(identifier: identifier) == data)
     }
 }

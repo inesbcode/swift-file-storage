@@ -19,6 +19,13 @@ directory and returns a stable string identifier to store in SwiftData instead.
 - `FileManager` and `NSCache` are not `Sendable`, so their stored properties use
   `nonisolated(unsafe)`. Both types are documented as thread-safe by Apple.
 
+## Documentation
+
+All public declarations must have a doc comment (`///`). Protocol methods must
+include `- Parameter`, `- Returns` (if non-Void), and `- Throws` (if throwing)
+sections. Concrete implementations repeat the same sections so the docs are
+visible directly on the type without navigating to the protocol.
+
 ## Commands
 
 ```bash
