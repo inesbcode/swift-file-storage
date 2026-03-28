@@ -1,4 +1,4 @@
-# swift-file-storage
+# FileStorage
 
 Disk-backed file storage for Apple platforms, designed to complement SwiftData.
 
