@@ -1,0 +1,11 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm
+Package.resolved
+*.pyc
+.docc-build
+.vscode
+.devcontainer
