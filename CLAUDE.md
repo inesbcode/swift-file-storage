@@ -26,6 +26,19 @@ include `- Parameter`, `- Returns` (if non-Void), and `- Throws` (if throwing)
 sections. Concrete implementations repeat the same sections so the docs are
 visible directly on the type without navigating to the protocol.
 
+## Error handling
+
+All throwing functions must use typed throws. The error type is always
+`FileStorageError`:
+
+```swift
+func store(_ data: Data) throws(FileStorageError) -> String
+```
+
+Private helpers that call framework APIs (e.g. `FileManager`) may use untyped
+`throws` internally, but must re-throw as `FileStorageError` before surfacing
+to callers.
+
 ## Commands
 
 ```bash

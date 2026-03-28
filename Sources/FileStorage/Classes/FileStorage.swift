@@ -47,7 +47,7 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     /// - Returns: A UUID string identifying the stored file, suitable for persistence in SwiftData.
     /// - Throws: `FileStorageError.storeFailure` wrapping any underlying file-system error.
     @discardableResult
-    public nonisolated func store(_ data: Data) throws -> String {
+    public nonisolated func store(_ data: Data) throws(FileStorageError) -> String {
         do {
             let identifier = UUID().uuidString
             let fileURL = storageURL.appendingPathComponent(identifier)
@@ -68,16 +68,15 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     /// - Returns: The binary data associated with `identifier`.
     /// - Throws: `FileStorageError.fileNotFound` if no file exists for `identifier`;
     ///   `FileStorageError.fetchFailure` if the file cannot be read from disk.
-    public nonisolated func fetch(identifier: String) throws -> Data {
+    public nonisolated func fetch(identifier: String) throws(FileStorageError) -> Data {
+        if let cached = fileCache.object(forKey: identifier as NSString) as? Data {
+            return cached
+        }
         do {
-            if let cached = fileCache.object(forKey: identifier as NSString) as? Data {
-                return cached
-            } else {
-                let url = try url(for: identifier)
-                let data = try Data(contentsOf: url)
-                fileCache.setObject(data as NSData, forKey: identifier as NSString, cost: data.count)
-                return data
-            }
+            let url = try url(for: identifier)
+            let data = try Data(contentsOf: url)
+            fileCache.setObject(data as NSData, forKey: identifier as NSString, cost: data.count)
+            return data
         } catch let error as FileStorageError {
             throw error
         } catch {
@@ -90,9 +89,9 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     /// Silently succeeds if no file exists for `identifier`.
     /// - Parameter identifier: The identifier previously returned by `store`.
     /// - Throws: `FileStorageError.deleteFailure` if the file cannot be removed from disk.
-    public nonisolated func delete(identifier: String) throws {
+    public nonisolated func delete(identifier: String) throws(FileStorageError) {
+        fileCache.removeObject(forKey: identifier as NSString)
         do {
-            fileCache.removeObject(forKey: identifier as NSString)
             let matches = try files(for: identifier)
             for url in matches {
                 try fileManager.removeItem(at: url)
@@ -108,10 +107,10 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     ///
     /// Silently succeeds if the storage directory does not exist yet.
     /// - Throws: `FileStorageError.cleanFailure` if the directory contents cannot be removed.
-    public nonisolated func clean() throws {
+    public nonisolated func clean() throws(FileStorageError) {
+        fileCache.removeAllObjects()
+        guard fileManager.fileExists(atPath: storageURL.path) else { return }
         do {
-            fileCache.removeAllObjects()
-            guard fileManager.fileExists(atPath: storageURL.path) else { return }
             let contents = try fileManager.contentsOfDirectory(
                 at: storageURL,
                 includingPropertiesForKeys: nil
@@ -130,13 +129,20 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     ///
     /// - Parameter identifier: The identifier to look up.
     /// - Returns: The URL of the matching file.
-    /// - Throws: `FileStorageError.fileNotFound` if no matching file exists.
-    private nonisolated func url(for identifier: String) throws -> URL {
-        let matches = try files(for: identifier)
-        guard let url = matches.first else {
-            throw FileStorageError.fileNotFound(identifier)
+    /// - Throws: `FileStorageError.fileNotFound` if no matching file exists;
+    ///   `FileStorageError.fetchFailure` if the directory cannot be read.
+    private nonisolated func url(for identifier: String) throws(FileStorageError) -> URL {
+        do {
+            let matches = try files(for: identifier)
+            guard let url = matches.first else {
+                throw FileStorageError.fileNotFound(identifier)
+            }
+            return url
+        } catch let error as FileStorageError {
+            throw error
+        } catch {
+            throw FileStorageError.fetchFailure(error.localizedDescription)
         }
-        return url
     }
 
     /// Returns all URLs in the storage directory whose name (without extension) matches `identifier`.
@@ -144,6 +150,7 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     /// Returns an empty array if the storage directory does not exist yet.
     /// - Parameter identifier: The identifier to match against file names.
     /// - Returns: Matching file URLs, or `[]` if the directory is absent.
+    /// - Throws: Any error thrown by `FileManager.contentsOfDirectory`.
     private nonisolated func files(for identifier: String) throws -> [URL] {
         guard fileManager.fileExists(atPath: storageURL.path) else { return [] }
         let contents = try fileManager.contentsOfDirectory(

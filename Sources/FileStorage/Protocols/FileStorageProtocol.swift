@@ -18,7 +18,7 @@ public protocol FileStorageProtocol: Sendable {
     /// - Returns: A unique identifier suitable for storage in SwiftData.
     /// - Throws: `FileStorageError.storeFailure` if the file cannot be written to disk.
     @discardableResult
-    nonisolated func store(_ data: Data) throws -> String
+    nonisolated func store(_ data: Data) throws(FileStorageError) -> String
 
     /// Returns data for `identifier`, reading from the memory cache before hitting disk.
     ///
@@ -26,18 +26,18 @@ public protocol FileStorageProtocol: Sendable {
     /// - Returns: The binary data associated with `identifier`.
     /// - Throws: `FileStorageError.fileNotFound` if no file exists for `identifier`;
     ///   `FileStorageError.fetchFailure` if the file cannot be read from disk.
-    nonisolated func fetch(identifier: String) throws -> Data
+    nonisolated func fetch(identifier: String) throws(FileStorageError) -> Data
 
     /// Removes the file and its memory-cache entry for `identifier`.
     ///
     /// Silently succeeds if no file exists for `identifier`.
     /// - Parameter identifier: The identifier previously returned by `store`.
     /// - Throws: `FileStorageError.deleteFailure` if the file cannot be removed from disk.
-    nonisolated func delete(identifier: String) throws
+    nonisolated func delete(identifier: String) throws(FileStorageError)
 
     /// Evicts all memory-cache entries and deletes every managed file on disk.
     ///
     /// Silently succeeds if the storage directory does not exist yet.
     /// - Throws: `FileStorageError.cleanFailure` if the directory contents cannot be removed.
-    nonisolated func clean() throws
+    nonisolated func clean() throws(FileStorageError)
 }
