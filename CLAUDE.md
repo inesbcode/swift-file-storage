@@ -4,6 +4,19 @@ Disk-backed file storage for Apple platforms, designed to complement SwiftData.
 SwiftData is not suited for large blobs: this package saves files to the Documents
 directory and returns a stable string identifier to store in SwiftData instead.
 
+## Project structure
+
+```
+Sources/   – production code (FileStorage target)
+Mocks/     – mock implementations (FileStorageMocks target)
+Tests/     – unit tests (FileStorageTests target)
+```
+
+`FileStorageMocks` is intentionally kept outside `Sources/` to make clear it is
+not production code. SPM resolves it via an explicit `path: "Mocks/FileStorageMocks"`
+in `Package.swift`. Add `FileStorageMocks` as a dependency only in test targets or
+Xcode Preview targets — never in a production app target.
+
 ## How it works
 
 `FileStorage.store(_:)` generates a UUID, writes the file atomically to

@@ -16,10 +16,22 @@ let package = Package(
             name: "FileStorage",
             targets: ["FileStorage"]
         ),
+        .library(
+            name: "FileStorageMocks",
+            targets: ["FileStorageMocks"]
+        ),
     ],
     targets: [
         .target(
             name: "FileStorage",
+            swiftSettings: [
+                .defaultIsolation(MainActor.self),
+            ]
+        ),
+        .target(
+            name: "FileStorageMocks",
+            dependencies: ["FileStorage"],
+            path: "Mocks/FileStorageMocks",
             swiftSettings: [
                 .defaultIsolation(MainActor.self),
             ]
