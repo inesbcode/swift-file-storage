@@ -4,20 +4,36 @@ import PackageDescription
 
 let package = Package(
     name: "swift-file-storage",
+    platforms: [
+        .macOS(.v12),
+        .iOS(.v15),
+        .watchOS(.v8),
+        .tvOS(.v15),
+        .visionOS(.v1)
+    ],
     products: [
         .library(
-            name: "swift-file-storage",
-            targets: ["swift-file-storage"]
+            name: "FileStorage",
+            targets: ["FileStorage"]
         ),
     ],
     targets: [
         .target(
-            name: "swift-file-storage"
+            name: "FileStorage",
+            swiftSettings: [
+                .defaultIsolation(MainActor.self)
+            ]
         ),
         .testTarget(
-            name: "swift-file-storageTests",
-            dependencies: ["swift-file-storage"]
+            name: "FileStorageTests",
+            dependencies: ["FileStorage"],
+            swiftSettings: [
+                .defaultIsolation(MainActor.self)
+            ]
         ),
     ],
-    swiftLanguageModes: [.v6]
+    swiftLanguageModes: [
+        .v6,
+        .v5
+    ]
 )
