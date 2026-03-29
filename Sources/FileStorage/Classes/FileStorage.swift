@@ -1,6 +1,5 @@
 import Foundation
 import Logging
-import OSLog
 
 /// Thread-safe, disk-backed file storage with an inline `NSCache` for in-memory caching.
 ///
@@ -138,7 +137,7 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
     /// Silently succeeds if the storage directory does not exist yet.
     /// - Throws: `FileStorageError.cleanFailure` if the directory contents cannot be removed.
     public nonisolated func clean() throws(FileStorageError) {
-        Logging.data.debug("Cleaning storage at \(storageURL.path, privacy: .public)")
+        Logging.data.debug("Cleaning storage at \(self.storageURL.path, privacy: .public)")
         fileCache.removeAllObjects()
         guard fileManager.fileExists(atPath: storageURL.path) else {
             Logging.data.debug("Storage directory does not exist — nothing to clean")
