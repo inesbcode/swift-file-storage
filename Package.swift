@@ -21,9 +21,15 @@ let package = Package(
             targets: ["FileStorageMocks"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/inesbcode/swift-logging", from: "1.0.0"),
+    ],
     targets: [
         .target(
             name: "FileStorage",
+            dependencies: [
+                .product(name: "Logging", package: "swift-logging"),
+            ],
             swiftSettings: [
                 .defaultIsolation(MainActor.self),
             ]
