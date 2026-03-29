@@ -194,4 +194,6 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
         )
         return contents.filter { $0.deletingPathExtension().lastPathComponent == identifier }
     }
+    
+    public nonisolated static let shared: FileStorage = FileStorage()
 }
