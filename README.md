@@ -8,10 +8,10 @@ SwiftData is a great fit for structured data, but storing large blobs (images, d
 
 | Platform | Minimum version |
 |----------|----------------|
-| iOS      | 15             |
-| macOS    | 12             |
-| watchOS  | 8              |
-| tvOS     | 15             |
+| iOS      | 16             |
+| macOS    | 13             |
+| watchOS  | 9              |
+| tvOS     | 16             |
 | visionOS | 1              |
 
 Swift 6 · Swift Package Manager

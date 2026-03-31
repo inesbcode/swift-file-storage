@@ -12,8 +12,9 @@ import Logging
 /// `NSCache` (cache reads/writes) and atomic file I/O (disk operations).
 public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
 
+    /// A shared `FileStorage` instance using all default configuration values.
     public nonisolated static let shared: FileStorage = FileStorage()
-    
+
     /// The directory on disk where files managed by this instance reside.
     private let storageURL: URL
     private let logging: Logging
@@ -28,10 +29,11 @@ public final class FileStorage: FileStorageProtocol, @unchecked Sendable {
 
     /// Creates a `FileStorage` instance backed by the app's Documents directory.
     ///
-    /// Sets `Logging.subsystem` to `"com.inesb.swift-file-storage"` so all log events
-    /// from this package are identifiable in Console.app and `log stream`.
+    /// A `Logging` instance is created per `FileStorage` using the provided `subsystem`,
+    /// so all log events from this instance are identifiable in Console.app and `log stream`.
     /// - Parameters:
     ///   - subdirectory: Folder name appended to the Documents directory. Defaults to `"FileStorage"`.
+    ///   - subsystem: The logging subsystem identifier. Defaults to `"com.inesb.swift-file-storage"`.
     ///   - fileManager: The `FileManager` used for all disk operations. Defaults to `.default`.
     ///   - fileCache: The `NSCache` instance used for in-memory caching. Defaults to `.medium`.
     public nonisolated init(
