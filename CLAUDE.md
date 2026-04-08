@@ -39,6 +39,24 @@ include `- Parameter`, `- Returns` (if non-Void), and `- Throws` (if throwing)
 sections. Concrete implementations repeat the same sections so the docs are
 visible directly on the type without navigating to the protocol.
 
+## Test conventions
+
+Each test file contains exactly one `@Suite` and the suite name must match the
+production type under test (e.g. `FileStorage` → `FileStorageTests`).
+
+Test files mirror the folder structure of `Sources/FileStorage/`. If a type
+lives in `Sources/FileStorage/Classes/`, its test file lives in
+`Tests/FileStorageTests/Classes/`; if it lives in `Sources/FileStorage/Models/`,
+the test lives in `Tests/FileStorageTests/Models/`, and so on.
+
+```
+Sources/FileStorage/Classes/FileStorage.swift  → Tests/FileStorageTests/Classes/FileStorageTests.swift
+```
+
+Never put multiple suites in one file, and never group tests for different types
+into the same suite even if they exercise related concerns — merge those into the
+single suite for that type instead.
+
 ## Error handling
 
 All throwing functions must use typed throws. The error type is always
